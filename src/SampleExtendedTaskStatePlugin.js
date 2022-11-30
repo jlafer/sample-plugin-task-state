@@ -2,7 +2,10 @@ import { VERSION } from '@twilio/flex-ui';
 import { FlexPlugin } from '@twilio/flex-plugin';
 import * as R from 'ramda';
 
-import reducers, {namespace, initiateTaskState, updateTaskState, terminateTaskState, getTask} from './states';
+import reducers from './states';
+import {
+  namespace, initiateTaskState, updateSelectedTask, updateTaskState, terminateTaskState, getSelectedTask, getTask
+} from './states';
 
 const PLUGIN_NAME = 'SampleExtendedTaskStatePlugin';
 
@@ -13,6 +16,7 @@ const afterAcceptTask = R.curry((manager, payload) => {
   const {taskChannelUniqueName, attributes, sourceObject} = task;
   const {channelSid} = attributes;
   dispatch( initiateTaskState(task.sid, {count: 0, channelSid}) );
+  console.log('-------------------afterAcceptTask: appState now:', getAppState(store));
 });
 
 const afterSelectTask = R.curry((manager, payload) => {
@@ -21,11 +25,14 @@ const afterSelectTask = R.curry((manager, payload) => {
   const {task} = payload;
   if (!task)
     return;
+  console.log(`user selected task ${task.sid}`);
   const taskInState = getTaskFromState(store, task.sid);
   if (taskInState) {
+    dispatch( updateSelectedTask(task.sid) );
     dispatch( updateTaskState(task.sid, {count: taskInState.count + 1}) );
     alert(`Task has been selected ${taskInState.count + 1} times`);
   }
+  console.log('-------------------afterSelectTask: appState now:', getAppState(store));
 });
 
 const afterCompleteTask = R.curry((manager, payload) => {
@@ -35,7 +42,16 @@ const afterCompleteTask = R.curry((manager, payload) => {
   const taskInState = getTaskFromState(store, task.sid);
   console.log(`will terminate task:`, taskInState);
   dispatch( terminateTaskState(task.sid) );
+  console.log('-------------------afterCompleteTask: appState now:', getAppState(store));
 });
+
+const getAppState = (store) => store.getState()[namespace].appState;
+
+const getSelectedTaskState = (store) => {
+  const state = store.getState()[namespace].appState;
+  const task = getSelectedTask(state);
+  return task;
+};
 
 const getTaskFromState = (store, resSid) => {
   const state = store.getState()[namespace].appState;
