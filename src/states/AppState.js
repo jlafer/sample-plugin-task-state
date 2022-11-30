@@ -1,5 +1,5 @@
 import * as R from 'ramda';
-import {INITIATE_TASK_STATE, TERMINATE_TASK_STATE} from './actions';
+import {INITIATE_TASK_STATE, UPDATE_TASK_STATE, TERMINATE_TASK_STATE} from './actions';
 
 const initialState = {
   tasks: {}
@@ -10,6 +10,8 @@ export default function reduce(state = initialState, action) {
   switch (type) {
     case INITIATE_TASK_STATE:
       return initTaskState(state, payload);
+    case UPDATE_TASK_STATE:
+      return updateTaskState(state, payload);
     case TERMINATE_TASK_STATE:
       return removeTaskState(state, payload);
     default:
@@ -18,27 +20,38 @@ export default function reduce(state = initialState, action) {
 }
 
 export const initTaskState = (state, payload) => {
-  const {resSid, channelSid, ts} = payload;
-  const task = setExtendedTaskState(channelSid, ts);
-  const tasks = R.assoc(resSid, task, state.tasks);
+  const {resSid, data} = payload;
+  const tasks = R.assoc(resSid, data, state.tasks);
   console.log('---------------initTaskState: tasks now:', tasks);
   return {...state, tasks};
 };
 
-const setExtendedTaskState = (channelSid, startTS) => {
-  return {
-    channelSid, startTS, subject: ''
-  };
+export const updateTaskState = (state, payload) => {
+  const {resSid, data} = payload;
+  const task = getTask(state, resSid);
+  if (!task) {
+    return state;
+  }
+  const updatedTask = R.mergeRight(task, data);
+  const tasks = R.assoc(resSid, updatedTask, state.tasks);
+  return {...state, tasks};
 };
 
 export const removeTaskState = (state, payload) => {
   const {resSid} = payload;
-  const task = state.tasks[resSid];
+  const task = getTask(state, resSid);
   if (!task) {
-    console.warn('removeTaskState: task not found in state???', payload);
     return state;
   }
   const tasks = R.dissoc(resSid, state.tasks);
   console.log('---------------removeTaskState: tasks now:', tasks);
   return {...state, tasks};
 };
+
+export const getTask = (state, resSid) => {
+  const task = state.tasks[resSid];
+  if (!task) {
+    console.warn(`getTask: task not found in state for ${resSid}???`);
+  }
+  return task;
+}

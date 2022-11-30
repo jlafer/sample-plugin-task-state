@@ -1,31 +1,13 @@
-# Your custom Twilio Flex Plugin
+# Sample Twilio Flex Plugin for Task State
 
-Twilio Flex Plugins allow you to customize the appearance and behavior of [Twilio Flex](https://www.twilio.com/flex). If you want to learn more about the capabilities and how to use the API, check out our [Flex documentation](https://www.twilio.com/docs/flex).
+This is a sample Twilio Flex Plugin that demonstrates one way to manage Task state in the Redux store.
 
-## Setup
+As tasks are accepted by the agent, selected task properties are added to a dictionary object in the store. When those tasks are completed by the agent, they are removed. The task properties to be stored in state are chosen by the developer.
 
-Make sure you have [Node.js](https://nodejs.org) as well as [`npm`](https://npmjs.com). We support Node >= 10.12 (and recommend the _even_ versions of Node). Afterwards, install the dependencies by running `npm install`:
+# Usage
 
-```bash
-cd 
+The `afterAcceptTask` handler saves the initial state of each new task, which is saved in a dictionary object keyed by the Task Reservation SID. Currently, this is done for all tasks but one could check task properties (e.g., the channel type) and be selective if state is only desired for certain tasks.
 
-# If you use npm
-npm install
-```
+At any point in the lifecycle of a task, the developer can retrieve its current state by calling `states.getTask(state, resSid)` or update its state by calling `dispatch( updateTaskState(resSid, data) )`. Examples of these can be found in the code.
 
-Next, please install the [Twilio CLI](https://www.twilio.com/docs/twilio-cli/quickstart) by running:
-
-```bash
-brew tap twilio/brew && brew install twilio
-```
-
-Finally, install the [Flex Plugin extension](https://github.com/twilio-labs/plugin-flex/tree/v1-beta) for the Twilio CLI:
-
-```bash
-twilio plugins:install @twilio-labs/plugin-flex
-```
-
-## Development
-
-Run `twilio flex:plugins --help` to see all the commands we currently support. For further details on Flex Plugins refer to our documentation on the [Twilio Docs](https://www.twilio.com/docs/flex/developer/plugins/cli) page.
-
+When a task is completed by the agent, the `afterCompleteTask` handler removes the task state from the store.
